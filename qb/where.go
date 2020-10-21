@@ -9,10 +9,10 @@ const (
 	// Eq equals
 	Eq WhereOp = "="
 
-	// Gt grater or equal
+	// Ge grater or equal
 	Ge WhereOp = ">="
 
-	// Lt lower or equal
+	// Le lower or equal
 	Le WhereOp = "<="
 
 	// L lower

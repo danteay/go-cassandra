@@ -13,6 +13,7 @@ type Config struct {
 
 type columns []string
 
+// Order definition for type or order on a select query
 type Order string
 
 const (

@@ -1,5 +1,8 @@
 # go-cassandra
 
+**This repo is on development and is incomplete, do not use even for non production projects**
+---
+
 This is a simple Query Builder for Apache Cassandra database. It uses `gocql` driver and `goclqx` Query Builder 
 internally to create friendly layer to interact with the database trough struct bindings.
 

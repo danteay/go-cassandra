@@ -2,14 +2,22 @@ package qb
 
 import "github.com/gocql/gocql"
 
+// CountQuery create new select count query
 type CountQuery struct {
 	session *gocql.Session
 	table   string
+	fields  columns
 	where   []whereStm
 }
 
 func newCountQuery(s *gocql.Session) *CountQuery {
 	return &CountQuery{session: s}
+}
+
+// Columns set columns to count
+func (cq *CountQuery) Columns(f ...string) *CountQuery {
+	cq.fields = f
+	return cq
 }
 
 // From set table for select query
