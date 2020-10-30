@@ -6,17 +6,18 @@ import "github.com/gocql/gocql"
 type CountQuery struct {
 	session *gocql.Session
 	table   string
-	fields  columns
+	column  string
 	where   []whereStm
+	args    []interface{}
 }
 
 func newCountQuery(s *gocql.Session) *CountQuery {
 	return &CountQuery{session: s}
 }
 
-// Columns set columns to count
-func (cq *CountQuery) Columns(f ...string) *CountQuery {
-	cq.fields = f
+// Column set count column of the query
+func (cq *CountQuery) Column(c string) *CountQuery {
+	cq.column = c
 	return cq
 }
 
@@ -27,10 +28,8 @@ func (cq *CountQuery) From(t string) *CountQuery {
 }
 
 // Where adds single where conditional. If more are needed, concatenate more calls to this functions
-func (cq *CountQuery) Where(f string, op WhereOp) *CountQuery {
-	cq.where = append(cq.where, whereStm{
-		field: f, op: op,
-	})
-
+func (cq *CountQuery) Where(f string, op WhereOp, v interface{}) *CountQuery {
+	cq.where = append(cq.where, whereStm{field: f, op: op})
+	cq.args = append(cq.args, v)
 	return cq
 }

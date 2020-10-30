@@ -6,7 +6,7 @@ type client struct {
 	session *gocql.Session
 }
 
-// NewClient creates a new cassandra client manager
+// NewClient creates a new cassandra client manager from config
 func NewClient(conf Config) (Client, error) {
 	s, err := getSession(conf)
 	if err != nil {
@@ -23,15 +23,15 @@ func (c *client) Select(f ...string) *SelectQuery {
 }
 
 func (c *client) Insert(f ...string) *InsertQuery {
-	panic("implement me")
+	return newInsertQuery(c.session, f...)
 }
 
-func (c *client) Update() *UpdateQuery {
-	panic("implement me")
+func (c *client) Update(t string) *UpdateQuery {
+	return newUpdateQuery(c.session, t)
 }
 
 func (c *client) Delete() *DeleteQuery {
-	panic("implement me")
+	return newDeleteQuery(c.session)
 }
 
 func (c *client) Count() *CountQuery {

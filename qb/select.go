@@ -29,11 +29,9 @@ func (sq *SelectQuery) From(t string) *SelectQuery {
 }
 
 // Where adds single where conditional. If more are needed, concatenate more calls to this functions
-func (sq *SelectQuery) Where(f string, op WhereOp) *SelectQuery {
-	sq.where = append(sq.where, whereStm{
-		field: f, op: op,
-	})
-
+func (sq *SelectQuery) Where(f string, op WhereOp, v interface{}) *SelectQuery {
+	sq.where = append(sq.where, whereStm{field: f, op: op})
+	sq.args = append(sq.args, v)
 	return sq
 }
 
@@ -53,12 +51,6 @@ func (sq *SelectQuery) GroupBy(f ...string) *SelectQuery {
 // Limit adds `limit` query statement
 func (sq *SelectQuery) Limit(l uint) *SelectQuery {
 	sq.limit = l
-	return sq
-}
-
-// Args set replacement arg values on result query to be processed
-func (sq *SelectQuery) Args(args ...interface{}) *SelectQuery {
-	sq.args = args
 	return sq
 }
 

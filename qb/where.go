@@ -25,6 +25,7 @@ const (
 type whereStm struct {
 	field string
 	op    WhereOp
+	value interface{}
 }
 
 func buildWhere(stms []whereStm) []qb.Cmp {

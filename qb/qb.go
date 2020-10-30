@@ -4,11 +4,11 @@ import "github.com/gocql/gocql"
 
 // Config is the main cassandra configuration needed
 type Config struct {
-	Port          int      `yaml:"port"`
-	KeyspaceName  string   `yaml:"keyspace_name"`
-	Username      string   `yaml:"username"`
-	Password      string   `yaml:"password"`
-	ContactPoints []string `yaml:"contact_points"`
+	Port          int      `yaml:"port" json:"port"`
+	KeyspaceName  string   `yaml:"keyspace_name" json:"keyspace_name"`
+	Username      string   `yaml:"username" json:"username"`
+	Password      string   `yaml:"password" json:"password"`
+	ContactPoints []string `yaml:"contact_points" json:"contact_points"`
 }
 
 type columns []string
@@ -35,7 +35,7 @@ type Client interface {
 	Insert(f ...string) *InsertQuery
 
 	// Update start an update query statement
-	Update() *UpdateQuery
+	Update(t string) *UpdateQuery
 
 	// Delete start a new delete query statement
 	Delete() *DeleteQuery

@@ -3,6 +3,7 @@ package qb
 import (
 	"errors"
 	"reflect"
+	"strings"
 
 	"github.com/gocql/gocql"
 	"github.com/scylladb/gocqlx/qb"
@@ -106,9 +107,9 @@ func (sq *SelectQuery) build() string {
 			var order qb.Order = qb.DESC
 
 			switch sq.order {
-			case "ASC":
+			case Asc:
 				order = qb.ASC
-			case "DESC":
+			case Desc:
 				order = qb.ASC
 			}
 
@@ -122,5 +123,5 @@ func (sq *SelectQuery) build() string {
 
 	query, _ := q.Json().ToCql()
 
-	return query
+	return strings.TrimSpace(query)
 }
