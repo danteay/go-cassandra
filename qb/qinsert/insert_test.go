@@ -1,4 +1,4 @@
-package qb
+package qinsert
 
 import (
 	"reflect"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestInsertQuery_Into(t *testing.T) {
-	q := &InsertQuery{}
+	q := &Query{}
 
 	q.Into("test_table")
 
@@ -16,7 +16,7 @@ func TestInsertQuery_Into(t *testing.T) {
 }
 
 func TestInsertQuery_Values(t *testing.T) {
-	q := &InsertQuery{}
+	q := &Query{}
 
 	values := []interface{}{1, "asd", true, 12.34}
 

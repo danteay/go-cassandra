@@ -1,4 +1,4 @@
-package qb
+package query
 
 import (
 	"encoding/json"
@@ -7,7 +7,22 @@ import (
 	"reflect"
 )
 
-func verifyBind(b interface{}, k reflect.Kind) error {
+// Columns defines a list of table column names
+type Columns []string
+
+// Order definition for type or order on a qselect query
+type Order string
+
+const (
+	// Desc represents DESC order filter
+	Desc Order = "DESC"
+
+	// Asc represents ASC order filter
+	Asc Order = "ASC"
+)
+
+// VerifyBind verify if an interface is bindable or not by checking it is a Ptr kind
+func VerifyBind(b interface{}, k reflect.Kind) error {
 	t := reflect.TypeOf(b)
 	v := reflect.ValueOf(b)
 
@@ -25,7 +40,8 @@ func verifyBind(b interface{}, k reflect.Kind) error {
 	return nil
 }
 
-func bindMapToStruct(m map[string]interface{}, st reflect.Value) error {
+// BindMapToStruct bind values of a map into a new struct of the given reflected type Value
+func BindMapToStruct(m map[string]interface{}, st reflect.Value) error {
 	indVal := reflect.Indirect(st)
 	indTyp := indVal.Type()
 
@@ -43,13 +59,13 @@ func bindMapToStruct(m map[string]interface{}, st reflect.Value) error {
 		field := indTyp.Field(i)
 		value := indVal.Field(i)
 
-		tagField := field.Tag.Get(modelsTag)
+		tagField := field.Tag.Get(Tag)
 		mv, ok := m[tagField]
 
 		if tagField != "" && ok {
 			fmt.Printf("map: %T field: %v\n", mv, field.Type)
 
-			err := castMapValue(mv, field.Type, value)
+			err := CastMapValue(mv, field.Type, value)
 			if err != nil {
 				fmt.Printf("err: %v\n", err)
 			}
@@ -59,7 +75,8 @@ func bindMapToStruct(m map[string]interface{}, st reflect.Value) error {
 	return nil
 }
 
-func castMapValue(mv interface{}, t reflect.Type, v reflect.Value) error {
+// CastMapValue convert interface value into a compatible value of the reflected type
+func CastMapValue(mv interface{}, t reflect.Type, v reflect.Value) error {
 	newVal := reflect.Indirect(reflect.New(t)).Interface()
 
 	switch newVal.(type) {
@@ -82,7 +99,9 @@ func castMapValue(mv interface{}, t reflect.Type, v reflect.Value) error {
 	return nil
 }
 
-func bindRow(jsonRow []byte, st reflect.Type) (reflect.Value, error) {
+// BindRow bind a row of returned data on json format into a given struct type with `gocql` tags that assoc
+// fields to struct members
+func BindRow(jsonRow []byte, st reflect.Type) (reflect.Value, error) {
 	var row map[string]interface{}
 	elem := reflect.New(st)
 
@@ -90,7 +109,7 @@ func bindRow(jsonRow []byte, st reflect.Type) (reflect.Value, error) {
 		return reflect.Value{}, err
 	}
 
-	if err := bindMapToStruct(row, elem); err != nil {
+	if err := BindMapToStruct(row, elem); err != nil {
 		return reflect.Value{}, err
 	}
 

@@ -1,12 +1,14 @@
-package qb
+package qupdate
 
 import (
 	"strings"
 
+	"github.com/danteay/go-cassandra/qb/query"
 	"github.com/scylladb/gocqlx/qb"
 )
 
-func (uq *UpdateQuery) Exec() error {
+// Exec run qupdate query from builder and return an error if exists
+func (uq *Query) Exec() error {
 	q := uq.build()
 
 	if err := uq.session.Query(q, uq.args...).Exec(); err != nil {
@@ -16,7 +18,7 @@ func (uq *UpdateQuery) Exec() error {
 	return nil
 }
 
-func (uq *UpdateQuery) build() string {
+func (uq *Query) build() string {
 	q := qb.Update(uq.table)
 
 	if len(uq.fields) > 0 {
@@ -25,11 +27,11 @@ func (uq *UpdateQuery) build() string {
 
 	if len(uq.where) > 0 {
 		if len(uq.where) > 0 {
-			q = q.Where(buildWhere(uq.where)...)
+			q = q.Where(query.BuildWhere(uq.where)...)
 		}
 	}
 
-	query, _ := q.ToCql()
+	queryStr, _ := q.ToCql()
 
-	return strings.TrimSpace(query)
+	return strings.TrimSpace(queryStr)
 }

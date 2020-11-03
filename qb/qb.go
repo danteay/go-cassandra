@@ -1,6 +1,13 @@
 package qb
 
-import "github.com/gocql/gocql"
+import (
+	"github.com/danteay/go-cassandra/qb/qcount"
+	delete2 "github.com/danteay/go-cassandra/qb/qdelete"
+	"github.com/danteay/go-cassandra/qb/qinsert"
+	_select "github.com/danteay/go-cassandra/qb/qselect"
+	"github.com/danteay/go-cassandra/qb/qupdate"
+	"github.com/gocql/gocql"
+)
 
 // Config is the main cassandra configuration needed
 type Config struct {
@@ -11,37 +18,22 @@ type Config struct {
 	ContactPoints []string `yaml:"contact_points" json:"contact_points"`
 }
 
-type columns []string
-
-// Order definition for type or order on a select query
-type Order string
-
-const (
-	// Desc represents DESC order filter
-	Desc Order = "DESC"
-
-	// Asc represents ASC order filter
-	Asc Order = "ASC"
-)
-
-const modelsTag = "gocql"
-
 // Client is the main cassandra client abstraction to work with the database
 type Client interface {
-	// Select start a select query
-	Select(f ...string) *SelectQuery
+	// Select start a qselect query
+	Select(f ...string) *_select.Query
 
-	// Insert start a new insert query statement
-	Insert(f ...string) *InsertQuery
+	// Insert start a new qinsert query statement
+	Insert(f ...string) *qinsert.Query
 
-	// Update start an update query statement
-	Update(t string) *UpdateQuery
+	// Update start an qupdate query statement
+	Update(t string) *qupdate.Query
 
-	// Delete start a new delete query statement
-	Delete() *DeleteQuery
+	// Delete start a new qdelete query statement
+	Delete() *delete2.Query
 
-	// Count start new count query statement
-	Count() *CountQuery
+	// Count start new qcount query statement
+	Count() *qcount.Query
 
 	// Session return the plain session object to build some direct query
 	Session() *gocql.Session

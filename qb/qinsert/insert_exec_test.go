@@ -1,4 +1,4 @@
-package qb
+package qinsert
 
 import (
 	"reflect"
@@ -8,21 +8,21 @@ import (
 func TestInsertQuery_build(t *testing.T) {
 	tt := []struct {
 		table   string
-		fields  columns
+		fields  []string
 		values  []interface{}
 		res     string
 		expArgs []interface{}
 	}{
 		{
 			table:   "test1",
-			fields:  columns{"col1", "col2", "col3"},
+			fields:  []string{"col1", "col2", "col3"},
 			values:  []interface{}{1, "123", true},
 			expArgs: []interface{}{1, "123", true},
 			res:     "INSERT INTO test1 (col1,col2,col3) VALUES (?,?,?)",
 		},
 		{
 			table:   "test2",
-			fields:  columns{"col1", "col2", "col3"},
+			fields:  []string{"col1", "col2", "col3"},
 			values:  []interface{}{"1", "123", "true"},
 			expArgs: []interface{}{"1", "123", "true"},
 			res:     "INSERT INTO test2 (col1,col2,col3) VALUES (?,?,?)",
@@ -30,7 +30,7 @@ func TestInsertQuery_build(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		q := newInsertQuery(nil, test.fields...).Into(test.table).Values(test.values...)
+		q := New(nil, test.fields...).Into(test.table).Values(test.values...)
 		query := q.build()
 
 		if query != test.res {

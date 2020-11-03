@@ -1,6 +1,13 @@
 package qb
 
-import "github.com/gocql/gocql"
+import (
+	"github.com/danteay/go-cassandra/qb/qcount"
+	"github.com/danteay/go-cassandra/qb/qdelete"
+	"github.com/danteay/go-cassandra/qb/qinsert"
+	"github.com/danteay/go-cassandra/qb/qselect"
+	"github.com/danteay/go-cassandra/qb/qupdate"
+	"github.com/gocql/gocql"
+)
 
 type client struct {
 	session *gocql.Session
@@ -8,34 +15,34 @@ type client struct {
 
 // NewClient creates a new cassandra client manager from config
 func NewClient(conf Config) (Client, error) {
-	s, err := getSession(conf)
+	session, err := getSession(conf)
 	if err != nil {
 		return nil, err
 	}
 
-	return &client{session: s}, nil
+	return &client{session: session}, nil
 }
 
 var _ Client = &client{}
 
-func (c *client) Select(f ...string) *SelectQuery {
-	return newSelectQuery(c.session, f...)
+func (c *client) Select(f ...string) *qselect.Query {
+	return qselect.New(c.session, f...)
 }
 
-func (c *client) Insert(f ...string) *InsertQuery {
-	return newInsertQuery(c.session, f...)
+func (c *client) Insert(f ...string) *qinsert.Query {
+	return qinsert.New(c.session, f...)
 }
 
-func (c *client) Update(t string) *UpdateQuery {
-	return newUpdateQuery(c.session, t)
+func (c *client) Update(t string) *qupdate.Query {
+	return qupdate.New(c.session, t)
 }
 
-func (c *client) Delete() *DeleteQuery {
-	return newDeleteQuery(c.session)
+func (c *client) Delete() *qdelete.Query {
+	return qdelete.New(c.session)
 }
 
-func (c *client) Count() *CountQuery {
-	return newCountQuery(c.session)
+func (c *client) Count() *qcount.Query {
+	return qcount.New(c.session)
 }
 
 // Close finish cassandra session
