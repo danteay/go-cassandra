@@ -5,27 +5,31 @@ import (
 	"github.com/gocql/gocql"
 )
 
-// Query create new qselect qcount query
+// Query create new select count query
 type Query struct {
-	session *gocql.Session
-	table   string
-	column  string
-	where   []query.WhereStm
-	args    []interface{}
+	ctx    query.Query
+	table  string
+	column string
+	where  []query.WhereStm
+	args   []interface{}
 }
 
-// New create a new qcount query instnace by passing a cassandra session
-func New(s *gocql.Session) *Query {
-	return &Query{session: s}
+// New create a new count query instance by passing a cassandra session
+func New(s *gocql.Session, d bool, dp query.DebugPrint) *Query {
+	return &Query{ctx: query.Query{
+		Session:    s,
+		Debug:      d,
+		PrintQuery: dp,
+	}}
 }
 
-// Column set qcount column of the query
+// Column set count column of the query
 func (cq *Query) Column(c string) *Query {
 	cq.column = c
 	return cq
 }
 
-// From set table for qselect query
+// From set table for count query
 func (cq *Query) From(t string) *Query {
 	cq.table = t
 	return cq
@@ -33,7 +37,7 @@ func (cq *Query) From(t string) *Query {
 
 // Where adds single where conditional. If more are needed, concatenate more calls to this functions
 func (cq *Query) Where(f string, op query.WhereOp, v interface{}) *Query {
-	cq.where = append(cq.where, query.WhereStm{Field: f, Op: op})
+	cq.where = append(cq.where, query.WhereStm{Field: f, Op: op, Value: v})
 	cq.args = append(cq.args, v)
 	return cq
 }

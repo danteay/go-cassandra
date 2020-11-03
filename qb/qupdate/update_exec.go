@@ -7,11 +7,11 @@ import (
 	"github.com/scylladb/gocqlx/qb"
 )
 
-// Exec run qupdate query from builder and return an error if exists
+// Exec run update query from builder and return an error if exists
 func (uq *Query) Exec() error {
 	q := uq.build()
 
-	if err := uq.session.Query(q, uq.args...).Exec(); err != nil {
+	if err := uq.ctx.Session.Query(q, uq.args...).Exec(); err != nil {
 		return err
 	}
 
@@ -32,6 +32,10 @@ func (uq *Query) build() string {
 	}
 
 	queryStr, _ := q.ToCql()
+
+	if uq.ctx.Debug {
+		uq.ctx.PrintQuery(queryStr, uq.args)
+	}
 
 	return strings.TrimSpace(queryStr)
 }

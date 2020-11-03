@@ -32,7 +32,7 @@ type WhereStm struct {
 	Value interface{}
 }
 
-// BuildWhere create a complete where statement to be used on qselect, qdelete, qcount and qupdate queries
+// BuildWhere create a complete where statement to be used on select, delete, count and update queries
 func BuildWhere(stms []WhereStm) []qb.Cmp {
 	var ops []qb.Cmp
 
@@ -43,11 +43,11 @@ func BuildWhere(stms []WhereStm) []qb.Cmp {
 		case Ge:
 			ops = append(ops, qb.GtOrEq(op.Field))
 		case Le:
-			ops = append(ops, qb.GtOrEq(op.Field))
+			ops = append(ops, qb.LtOrEq(op.Field))
 		case G:
-			ops = append(ops, qb.GtOrEq(op.Field))
+			ops = append(ops, qb.Gt(op.Field))
 		case L:
-			ops = append(ops, qb.GtOrEq(op.Field))
+			ops = append(ops, qb.Lt(op.Field))
 		}
 	}
 

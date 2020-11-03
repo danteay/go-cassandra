@@ -22,7 +22,7 @@ func (q *Query) One() error {
 
 	var jsonRow string
 
-	if err := q.session.Query(sq, q.args...).Consistency(gocql.One).Scan(&jsonRow); err != nil {
+	if err := q.ctx.Session.Query(sq, q.args...).Consistency(gocql.One).Scan(&jsonRow); err != nil {
 		return err
 	}
 
@@ -55,7 +55,7 @@ func (q *Query) All() error {
 
 	var jsonRow string
 
-	iter := q.session.Query(sq, q.args...).Iter()
+	iter := q.ctx.Session.Query(sq, q.args...).Iter()
 	defer func() { _ = iter.Close() }()
 
 	ib := reflect.Indirect(reflect.ValueOf(q.bind))
@@ -79,7 +79,7 @@ func (q *Query) All() error {
 func (q *Query) None() error {
 	sq := q.build()
 
-	if err := q.session.Query(sq, q.args...).Exec(); err != nil {
+	if err := q.ctx.Session.Query(sq, q.args...).Exec(); err != nil {
 		return err
 	}
 

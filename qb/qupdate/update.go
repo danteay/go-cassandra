@@ -5,21 +5,31 @@ import (
 	"github.com/gocql/gocql"
 )
 
-// Query represent a Cassandra qupdate query. Execution should not bind any value
+// Query represent a Cassandra update query. Execution should not bind any value
 type Query struct {
-	session *gocql.Session
-	table   string
-	fields  query.Columns
-	args    []interface{}
-	where   []query.WhereStm
+	ctx    query.Query
+	table  string
+	fields query.Columns
+	args   []interface{}
+	where  []query.WhereStm
 }
 
-// New create a new qupdate query by passing a cassandra session and the affected table
-func New(s *gocql.Session, t string) *Query {
-	return &Query{session: s, table: t}
+// New create a new update query by passing a cassandra session and the affected table
+func New(s *gocql.Session, d bool, dp query.DebugPrint) *Query {
+	return &Query{ctx: query.Query{
+		Session:    s,
+		Debug:      d,
+		PrintQuery: dp,
+	}}
 }
 
-// Set save field and corresponding value to qupdate
+// Table set the table name to affect with the update query
+func (uq *Query) Table(t string) *Query {
+	uq.table = t
+	return uq
+}
+
+// Set save field and corresponding value to update
 func (uq *Query) Set(f string, v interface{}) *Query {
 	uq.fields = append(uq.fields, f)
 	uq.args = append(uq.args, v)

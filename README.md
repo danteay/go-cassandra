@@ -6,7 +6,7 @@
 This is a simple Query Builder for Apache Cassandra database. It uses `gocql` driver and `goclqx` Query Builder 
 internally to create friendly layer to interact with the database trough struct bindings.
 
-## installing
+## Installing
 
 Simple run next command to download the latest version.
 

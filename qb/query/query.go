@@ -4,14 +4,29 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
+
+	"github.com/gocql/gocql"
 )
 
-// Columns defines a list of table column names
-type Columns []string
+type (
+	// Columns defines a list of table column names
+	Columns []string
 
-// Order definition for type or order on a qselect query
-type Order string
+	// Order definition for type or order on a qselect query
+	Order string
+
+	// DebugPrint defines a callback that prints query values
+	DebugPrint func(q string, args []interface{})
+
+	// Query Base definition of query
+	Query struct {
+		Session    *gocql.Session
+		Debug      bool
+		PrintQuery DebugPrint
+	}
+)
 
 const (
 	// Desc represents DESC order filter
@@ -20,6 +35,12 @@ const (
 	// Asc represents ASC order filter
 	Asc Order = "ASC"
 )
+
+// DefaultDebugPrint defines a default function that prints resultant query and arguments before being executed
+// and when the Debug flag is true
+func DefaultDebugPrint(q string, args []interface{}) {
+	log.Printf("query: %v \nargs: %v\n", q, args)
+}
 
 // VerifyBind verify if an interface is bindable or not by checking it is a Ptr kind
 func VerifyBind(b interface{}, k reflect.Kind) error {

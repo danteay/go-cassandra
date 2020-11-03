@@ -7,7 +7,7 @@ import (
 
 // Query represents a cassandra select statement and his options
 type Query struct {
-	session *gocql.Session
+	ctx     query.Query
 	fields  query.Columns
 	args    []interface{}
 	table   string
@@ -19,10 +19,19 @@ type Query struct {
 	limit   uint
 }
 
-// New create a new select query by passing a cassandra session and a variadic bunch of fields that should be
-// returned on the binded result
-func New(s *gocql.Session, f ...string) *Query {
-	return &Query{session: s, fields: f}
+// New create a new select query by passing a cassandra session and debug options
+func New(s *gocql.Session, d bool, dp query.DebugPrint) *Query {
+	return &Query{ctx: query.Query{
+		Session:    s,
+		Debug:      d,
+		PrintQuery: dp,
+	}}
+}
+
+// Fields save query fields that should be used for select query
+func (q *Query) Fields(f ...string) *Query {
+	q.fields = f
+	return q
 }
 
 // From set table for select query
