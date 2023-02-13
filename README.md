@@ -18,18 +18,10 @@ You can create a client with this:
 ```go
 package main
 
-import "github.com/danteay/go-cassandra/qb"
+import gocassandra "github.com/danteay/go-cassandra"
 
 func main() {
-    config := qb.Config{
-        Port:          9042,
-        KeyspaceName:  "test",
-        Username:      "",
-        Password:      "",
-        ContactPoints: []string{"127.0.0.1"},
-    }
-
-    client, err := qb.NewClient(config)
+    client, err := gocassandra.NewClient(gocassandra.DefaultConfig())
     if err != nil {
         panic(err)
     }
