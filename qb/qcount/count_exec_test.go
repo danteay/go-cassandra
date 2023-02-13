@@ -4,18 +4,18 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gocql/gocql"
-
+	"github.com/danteay/go-cassandra/qb/qcount/mocks"
 	"github.com/danteay/go-cassandra/qb/query"
 )
 
 func TestQuery_build(t *testing.T) {
 	tt := []struct {
-		table    string
-		column   string
-		where    []query.WhereStm
-		expQuery string
-		expArgs  []interface{}
+		table          string
+		column         string
+		where          []query.WhereStm
+		expQuery       string
+		expArgs        []interface{}
+		allowFiltering bool
 	}{
 		{
 			table:  "test",
@@ -53,13 +53,39 @@ func TestQuery_build(t *testing.T) {
 			expArgs:  []interface{}{true, 123},
 			expQuery: "SELECT count(id) FROM test WHERE field1=? AND field2>=?",
 		},
+		{
+			table:          "test",
+			column:         "id",
+			allowFiltering: true,
+			where: []query.WhereStm{
+				{
+					Field: "field1",
+					Op:    query.Eq,
+					Value: true,
+				},
+				{
+					Field: "field2",
+					Op:    query.Ge,
+					Value: 123,
+				},
+			},
+			expArgs:  []interface{}{true, 123},
+			expQuery: "SELECT count(id) FROM test WHERE field1=? AND field2>=? ALLOW FILTERING",
+		},
 	}
 
 	for i, test := range tt {
-		q := New(&gocql.Session{}, false, nil).From(test.table).Column(test.column)
+		client := mocks.NewClient(t)
+		client.On("Debug").Return(false)
+
+		q := New(client).From(test.table).Column(test.column)
 
 		for _, w := range test.where {
 			q = q.Where(w.Field, w.Op, w.Value)
+		}
+
+		if test.allowFiltering {
+			q = q.AllowFiltering()
 		}
 
 		queryStr := q.build()

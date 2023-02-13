@@ -3,9 +3,10 @@ package qcount
 import (
 	"strings"
 
-	"github.com/danteay/go-cassandra/qb/query"
 	"github.com/gocql/gocql"
 	"github.com/scylladb/gocqlx/qb"
+
+	"github.com/danteay/go-cassandra/qb/query"
 )
 
 // Exec release count query an return the number of rows and a possible error
@@ -14,11 +15,11 @@ func (cq *Query) Exec() (int64, error) {
 
 	var count int64
 
-	if err := cq.ctx.Session.Query(q, cq.args...).Consistency(gocql.One).Scan(&count); err != nil {
+	if err := cq.client.Session().Query(q, cq.args...).Consistency(gocql.One).Scan(&count); err != nil {
 		return 0, err
 	}
 
-	return 0, nil
+	return count, nil
 }
 
 func (cq *Query) build() string {
@@ -28,10 +29,14 @@ func (cq *Query) build() string {
 		q = q.Where(query.BuildWhere(cq.where)...)
 	}
 
+	if cq.allowFiltering {
+		q = q.AllowFiltering()
+	}
+
 	queryStr, _ := q.ToCql()
 
-	if cq.ctx.Debug {
-		cq.ctx.PrintQuery(queryStr, cq.args)
+	if cq.client.Debug() {
+		cq.client.PrintFn()(queryStr, cq.args, nil)
 	}
 
 	return strings.TrimSpace(queryStr)

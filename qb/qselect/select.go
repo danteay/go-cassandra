@@ -1,31 +1,38 @@
 package qselect
 
 import (
-	"github.com/danteay/go-cassandra/qb/query"
 	"github.com/gocql/gocql"
+
+	"github.com/danteay/go-cassandra/qb/query"
 )
+
+//go:generate mockery --name=Client --filename=client.go --structname=Client --output=mocks --outpkg=mocks
+
+type Client interface {
+	Session() *gocql.Session
+	Debug() bool
+	Restart() error
+	PrintFn() query.DebugPrint
+}
 
 // Query represents a cassandra select statement and his options
 type Query struct {
-	ctx     query.Query
-	fields  query.Columns
-	args    []interface{}
-	table   string
-	bind    interface{}
-	where   []query.WhereStm
-	groupBy query.Columns
-	orderBy query.Columns
-	order   query.Order
-	limit   uint
+	client         Client
+	fields         query.Columns
+	args           []interface{}
+	table          string
+	bind           interface{}
+	where          []query.WhereStm
+	groupBy        query.Columns
+	orderBy        query.Columns
+	order          query.Order
+	limit          uint
+	allowFiltering bool
 }
 
 // New create a new select query by passing a cassandra session and debug options
-func New(s *gocql.Session, d bool, dp query.DebugPrint) *Query {
-	return &Query{ctx: query.Query{
-		Session:    s,
-		Debug:      d,
-		PrintQuery: dp,
-	}}
+func New(c Client) *Query {
+	return &Query{client: c}
 }
 
 // Fields save query fields that should be used for select query
@@ -63,6 +70,12 @@ func (q *Query) GroupBy(f ...string) *Query {
 // Limit adds `limit` query statement
 func (q *Query) Limit(l uint) *Query {
 	q.limit = l
+	return q
+}
+
+// AllowFiltering sets a ALLOW FILTERING clause on the query.
+func (q *Query) AllowFiltering() *Query {
+	q.allowFiltering = true
 	return q
 }
 

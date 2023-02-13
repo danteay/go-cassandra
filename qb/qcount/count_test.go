@@ -6,15 +6,21 @@ import (
 
 	"github.com/gocql/gocql"
 
+	"github.com/danteay/go-cassandra/qb/qcount/mocks"
 	"github.com/danteay/go-cassandra/qb/query"
 )
 
 func TestNew(t *testing.T) {
 	s := &gocql.Session{}
-	q := New(s, false, nil)
 
-	if !reflect.DeepEqual(q.ctx.Session, s) {
+	client := mocks.NewClient(t)
+	client.On("Session").Return(s)
+
+	q := New(client)
+
+	if !reflect.DeepEqual(q.client.Session(), s) {
 		t.Errorf("associated session is different")
+		return
 	}
 }
 
@@ -24,11 +30,13 @@ func TestQuery_From(t *testing.T) {
 	q.From("test")
 	if q.table != "test" {
 		t.Errorf("exp: test got: %v", q.table)
+		return
 	}
 
 	q.From("test2")
 	if q.table != "test2" {
 		t.Errorf("exp: test2 got: %v", q.table)
+		return
 	}
 }
 

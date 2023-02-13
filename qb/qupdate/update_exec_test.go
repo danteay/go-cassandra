@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/qb/qupdate/mocks"
 )
 
 func TestQuery_build(t *testing.T) {
@@ -74,7 +75,10 @@ func TestQuery_build(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		q := New(nil, false, nil).Table(test.table)
+		client := mocks.NewClient(t)
+		client.On("Debug").Return(false)
+
+		q := New(client).Table(test.table)
 
 		for _, s := range test.set {
 			q = q.Set(s.field, s.value)

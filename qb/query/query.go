@@ -2,12 +2,13 @@ package query
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"reflect"
+	"time"
 
 	"github.com/gocql/gocql"
+
+	"github.com/danteay/go-cassandra/errors"
 )
 
 type (
@@ -18,7 +19,7 @@ type (
 	Order string
 
 	// DebugPrint defines a callback that prints query values
-	DebugPrint func(q string, args []interface{})
+	DebugPrint func(q string, args []interface{}, err error)
 
 	// Query Base definition of query
 	Query struct {
@@ -34,13 +35,9 @@ const (
 
 	// Asc represents ASC order filter
 	Asc Order = "ASC"
-)
 
-// DefaultDebugPrint defines a default function that prints resultant query and arguments before being executed
-// and when the Debug flag is true
-func DefaultDebugPrint(q string, args []interface{}) {
-	log.Printf("query: %v \nargs: %v\n", q, args)
-}
+	DatetimeLayout string = "2006-01-02 15:04:05.000Z"
+)
 
 // VerifyBind verify if an interface is bindable or not by checking it is a Ptr kind
 func VerifyBind(b interface{}, k reflect.Kind) error {
@@ -48,14 +45,14 @@ func VerifyBind(b interface{}, k reflect.Kind) error {
 	v := reflect.ValueOf(b)
 
 	if t.Kind() != reflect.Ptr {
-		return errors.New("bind value should be a pointer")
+		return errors.ErrNoPtrBinding
 	}
 
 	str := reflect.Indirect(v).Interface()
 	t = reflect.TypeOf(str)
 
 	if t.Kind() != k {
-		return errors.New("bind value needs to be a struct to get one value, or a slice of structs to get many")
+		return errors.ErrNoStructOrSliceBinding
 	}
 
 	return nil
@@ -67,11 +64,11 @@ func BindMapToStruct(m map[string]interface{}, st reflect.Value) error {
 	indTyp := indVal.Type()
 
 	if st.Kind() != reflect.Ptr {
-		return errors.New("bind should be a slice of struct pointers with `gocql` tags")
+		return errors.ErrNoPtrBinding
 	}
 
 	if indVal.Kind() != reflect.Struct {
-		return errors.New("bind should be a slice of struct pointers with `gocql` tags - 2")
+		return errors.ErrNoSliceOfStructsBinding
 	}
 
 	numField := indTyp.NumField()
@@ -84,11 +81,8 @@ func BindMapToStruct(m map[string]interface{}, st reflect.Value) error {
 		mv, ok := m[tagField]
 
 		if tagField != "" && ok {
-			fmt.Printf("map: %T field: %v\n", mv, field.Type)
-
-			err := CastMapValue(mv, field.Type, value)
-			if err != nil {
-				fmt.Printf("err: %v\n", err)
+			if err := CastMapValue(mv, field.Type, value); err != nil {
+				return err
 			}
 		}
 	}
@@ -102,8 +96,8 @@ func CastMapValue(mv interface{}, t reflect.Type, v reflect.Value) error {
 
 	switch newVal.(type) {
 	case int64:
-		intVal, _ := mv.(int)
-		v.SetInt(int64(intVal))
+		intVal := int64(mv.(float64))
+		v.SetInt(intVal)
 	case float64:
 		floatVal, _ := mv.(float64)
 		v.SetFloat(floatVal)
@@ -113,8 +107,11 @@ func CastMapValue(mv interface{}, t reflect.Type, v reflect.Value) error {
 	case bool:
 		boolVal, _ := mv.(bool)
 		v.SetBool(boolVal)
+	case time.Time:
+		t, _ := time.Parse(DatetimeLayout, mv.(string))
+		v.Set(reflect.ValueOf(t))
 	default:
-		return fmt.Errorf("can't cast value of type %T with value %v, to type %v", mv, mv, t)
+		return fmt.Errorf("cassandra-builder: can't cast value of type %T with value %v, to type %v", mv, mv, t)
 	}
 
 	return nil

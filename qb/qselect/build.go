@@ -3,8 +3,9 @@ package qselect
 import (
 	"strings"
 
-	"github.com/danteay/go-cassandra/qb/query"
 	"github.com/scylladb/gocqlx/qb"
+
+	"github.com/danteay/go-cassandra/qb/query"
 )
 
 func (q *Query) build() string {
@@ -20,6 +21,10 @@ func (q *Query) build() string {
 
 	if q.limit > 0 {
 		sb = sb.Limit(q.limit)
+	}
+
+	if q.allowFiltering {
+		sb = sb.AllowFiltering()
 	}
 
 	if len(q.orderBy) > 0 {
@@ -43,8 +48,8 @@ func (q *Query) build() string {
 
 	queryStr, _ := sb.Json().ToCql()
 
-	if q.ctx.Debug {
-		q.ctx.PrintQuery(queryStr, q.args)
+	if q.client.Debug() {
+		q.client.PrintFn()(queryStr, q.args, nil)
 	}
 
 	return strings.TrimSpace(queryStr)

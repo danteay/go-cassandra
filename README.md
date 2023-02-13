@@ -11,7 +11,7 @@ internally to create friendly layer to interact with the database trough struct 
 Simple run next command to download the latest version.
 
 ```shell script
-go get -u -v github.com/danteay/go-cassandra
+go get github.com/danteay/go-cassandra@latest
 ```
 
 You can create a client with this:

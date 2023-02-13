@@ -10,7 +10,7 @@ import (
 func (iq *Query) Exec() error {
 	q := iq.build()
 
-	if err := iq.ctx.Session.Query(q, iq.args...).Exec(); err != nil {
+	if err := iq.client.Session().Query(q, iq.args...).Exec(); err != nil {
 		return err
 	}
 
@@ -23,8 +23,8 @@ func (iq *Query) build() string {
 
 	queryStr, _ := q.ToCql()
 
-	if iq.ctx.Debug {
-		iq.ctx.PrintQuery(queryStr, iq.args)
+	if iq.client.Debug() {
+		iq.client.PrintFn()(queryStr, iq.args, nil)
 	}
 
 	return strings.TrimSpace(queryStr)
