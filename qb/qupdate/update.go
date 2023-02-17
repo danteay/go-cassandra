@@ -3,30 +3,39 @@ package qupdate
 import (
 	"github.com/gocql/gocql"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/config"
+	"github.com/danteay/go-cassandra/logging"
+	"github.com/danteay/go-cassandra/qb/where"
+	"github.com/danteay/go-cassandra/runner"
 )
 
 //go:generate mockery --name=Client --filename=client.go --structname=Client --output=mocks --outpkg=mocks
 
 type Client interface {
 	Session() *gocql.Session
-	Debug() bool
+	Config() config.Config
 	Restart() error
-	PrintFn() query.DebugPrint
+	Debug() bool
+	PrintFn() logging.DebugPrint
+}
+
+type Runner interface {
+	QueryNone(string, []interface{}) error
 }
 
 // Query represent a Cassandra update query. Execution should not bind any value
 type Query struct {
 	client Client
+	runner Runner
 	table  string
-	fields query.Columns
+	fields []string
 	args   []interface{}
-	where  []query.WhereStm
+	where  []where.Stm
 }
 
 // New create a new update query by passing a cassandra session and the affected table
 func New(c Client) *Query {
-	return &Query{client: c}
+	return &Query{client: c, runner: runner.New(c)}
 }
 
 // Table set the table name to affect with the update query
@@ -43,8 +52,8 @@ func (uq *Query) Set(f string, v interface{}) *Query {
 }
 
 // Where adds single where conditional. If more are needed, concatenate more calls to this functions
-func (uq *Query) Where(f string, op query.WhereOp, v interface{}) *Query {
-	uq.where = append(uq.where, query.WhereStm{Field: f, Op: op, Value: v})
+func (uq *Query) Where(f string, op where.Operator, v interface{}) *Query {
+	uq.where = append(uq.where, where.Stm{Field: f, Op: op, Value: v})
 	uq.args = append(uq.args, v)
 	return uq
 }

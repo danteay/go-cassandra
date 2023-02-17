@@ -5,25 +5,20 @@ import (
 
 	"github.com/scylladb/gocqlx/qb"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
 // Exec run update query from builder and return an error if exists
 func (uq *Query) Exec() error {
-	q := uq.build()
-
-	if err := uq.client.Session().Query(q, uq.args...).Exec(); err != nil {
-		if uq.client.Debug() {
-			uq.client.PrintFn()(q, uq.args, err)
-		}
-
+	query, err := uq.build()
+	if err != nil {
 		return err
 	}
 
-	return nil
+	return uq.runner.QueryNone(query, uq.args)
 }
 
-func (uq *Query) build() string {
+func (uq *Query) build() (string, error) {
 	q := qb.Update(uq.table)
 
 	if len(uq.fields) > 0 {
@@ -31,9 +26,11 @@ func (uq *Query) build() string {
 	}
 
 	if len(uq.where) > 0 {
-		if len(uq.where) > 0 {
-			q = q.Where(query.BuildWhere(uq.where)...)
+		stms, err := where.BuildStms(uq.where)
+		if err != nil {
+			return "", err
 		}
+		q = q.Where(stms...)
 	}
 
 	queryStr, _ := q.ToCql()
@@ -42,5 +39,5 @@ func (uq *Query) build() string {
 		uq.client.PrintFn()(queryStr, uq.args, nil)
 	}
 
-	return strings.TrimSpace(queryStr)
+	return strings.TrimSpace(queryStr), nil
 }

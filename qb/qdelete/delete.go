@@ -3,27 +3,39 @@ package qdelete
 import (
 	"github.com/gocql/gocql"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/config"
+	"github.com/danteay/go-cassandra/logging"
+	"github.com/danteay/go-cassandra/qb/where"
+	"github.com/danteay/go-cassandra/runner"
 )
 
 type Client interface {
 	Session() *gocql.Session
-	Debug() bool
+	Config() config.Config
 	Restart() error
-	PrintFn() query.DebugPrint
+	Debug() bool
+	PrintFn() logging.DebugPrint
+}
+
+type Runner interface {
+	QueryNone(string, []interface{}) error
 }
 
 // Query represents a Cassandra delete query. Execution should not bind any value
 type Query struct {
 	client Client
+	runner Runner
 	table  string
-	where  []query.WhereStm
+	where  []where.Stm
 	args   []interface{}
 }
 
 // New create a new delete query instance by passing a cassandra session
 func New(c Client) *Query {
-	return &Query{client: c}
+	return &Query{
+		client: c,
+		runner: runner.New(c),
+	}
 }
 
 // From set table where be data deleted
@@ -33,8 +45,8 @@ func (dq *Query) From(t string) *Query {
 }
 
 // Where set where conditions that can be nested to delete data
-func (dq *Query) Where(f string, op query.WhereOp, v interface{}) *Query {
-	dq.where = append(dq.where, query.WhereStm{Field: f, Op: op, Value: v})
+func (dq *Query) Where(f string, op where.Operator, v interface{}) *Query {
+	dq.where = append(dq.where, where.Stm{Field: f, Op: op, Value: v})
 	dq.args = append(dq.args, v)
 	return dq
 }

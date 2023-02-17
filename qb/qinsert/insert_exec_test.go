@@ -1,14 +1,16 @@
 package qinsert
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/danteay/go-cassandra/qb/qinsert/mocks"
 )
 
 func TestInsertQuery_build(t *testing.T) {
 	tt := []struct {
+		name    string
 		table   string
 		fields  []string
 		values  []interface{}
@@ -16,6 +18,7 @@ func TestInsertQuery_build(t *testing.T) {
 		expArgs []interface{}
 	}{
 		{
+			name:    "query insert with boolean values",
 			table:   "test1",
 			fields:  []string{"col1", "col2", "col3"},
 			values:  []interface{}{1, "123", true},
@@ -23,6 +26,7 @@ func TestInsertQuery_build(t *testing.T) {
 			res:     "INSERT INTO test1 (col1,col2,col3) VALUES (?,?,?)",
 		},
 		{
+			name:    "query insert with boolean values as string",
 			table:   "test2",
 			fields:  []string{"col1", "col2", "col3"},
 			values:  []interface{}{"1", "123", "true"},
@@ -32,20 +36,15 @@ func TestInsertQuery_build(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		client := mocks.NewClient(t)
-		client.On("Debug").Return(false)
+		t.Run(test.name, func(t *testing.T) {
+			client := mocks.NewClient(t)
+			client.On("Debug").Return(false)
 
-		q := New(client).Fields(test.fields...).Into(test.table).Values(test.values...)
-		query := q.build()
+			q := New(client).Fields(test.fields...).Into(test.table).Values(test.values...)
+			query := q.build()
 
-		if query != test.res {
-			t.Errorf("query err: \nexp: '%v' \ngot: '%v'", test.res, query)
-		}
-
-		for i := 0; i < len(q.args); i++ {
-			if !reflect.DeepEqual(q.args[i], test.expArgs[i]) {
-				t.Errorf("args err: expected: (%T)%v got: (%T)%v", test.expArgs[i], test.expArgs[i], q.args[i], q.args[i])
-			}
-		}
+			assert.Equal(t, test.res, query)
+			assert.Equal(t, test.expArgs, q.args)
+		})
 	}
 }

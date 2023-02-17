@@ -6,18 +6,15 @@ run:
 
 linters:
   enable:
+    - revive
     - asciicheck
     - bodyclose
     - depguard
     - gocritic
-    - gofmt
-    - goimports
     - goprintffuncname
     - gosimple
     - govet
-    - ineffassign
     - misspell
-    - rowserrcheck
     - staticcheck
     - stylecheck
     - typecheck
@@ -26,6 +23,7 @@ linters:
     - whitespace
     - errcheck
   disable:
+    - rowserrcheck
     - unparam
     - structcheck
     - varcheck

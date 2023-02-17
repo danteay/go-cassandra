@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"github.com/gocql/gocql"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/danteay/go-cassandra/qb/qcount/mocks"
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
 func TestNew(t *testing.T) {
@@ -18,26 +19,17 @@ func TestNew(t *testing.T) {
 
 	q := New(client)
 
-	if !reflect.DeepEqual(q.client.Session(), s) {
-		t.Errorf("associated session is different")
-		return
-	}
+	assert.Same(t, q.client.Session(), s)
 }
 
 func TestQuery_From(t *testing.T) {
 	q := &Query{}
 
 	q.From("test")
-	if q.table != "test" {
-		t.Errorf("exp: test got: %v", q.table)
-		return
-	}
+	assert.Equal(t, "test", q.table)
 
 	q.From("test2")
-	if q.table != "test2" {
-		t.Errorf("exp: test2 got: %v", q.table)
-		return
-	}
+	assert.Equal(t, "test2", q.table)
 }
 
 func TestQuery_Column(t *testing.T) {
@@ -57,46 +49,46 @@ func TestQuery_Column(t *testing.T) {
 func TestQuery_Where(t *testing.T) {
 	tt := []struct {
 		field   string
-		op      query.WhereOp
+		op      where.Operator
 		value   interface{}
 		expArgs []interface{}
-		expStm  []query.WhereStm
+		expStm  []where.Stm
 	}{
 		{
 			field:   "field1",
-			op:      query.Eq,
+			op:      where.Eq,
 			value:   nil,
 			expArgs: []interface{}{nil},
-			expStm: []query.WhereStm{
+			expStm: []where.Stm{
 				{
 					Field: "field1",
-					Op:    query.Eq,
+					Op:    where.Eq,
 					Value: nil,
 				},
 			},
 		},
 		{
 			field:   "field2",
-			op:      query.G,
+			op:      where.Gt,
 			value:   1,
 			expArgs: []interface{}{1},
-			expStm: []query.WhereStm{
+			expStm: []where.Stm{
 				{
 					Field: "field2",
-					Op:    query.G,
+					Op:    where.Gt,
 					Value: 1,
 				},
 			},
 		},
 		{
 			field:   "field3",
-			op:      query.L,
+			op:      where.Lt,
 			value:   1,
 			expArgs: []interface{}{1},
-			expStm: []query.WhereStm{
+			expStm: []where.Stm{
 				{
 					Field: "field3",
-					Op:    query.L,
+					Op:    where.Lt,
 					Value: 1,
 				},
 			},

@@ -1,11 +1,12 @@
 package qupdate
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/danteay/go-cassandra/qb/qupdate/mocks"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
 func TestQuery_build(t *testing.T) {
@@ -15,19 +16,21 @@ func TestQuery_build(t *testing.T) {
 	}
 
 	tt := []struct {
+		name    string
 		table   string
 		set     []set
-		where   []query.WhereStm
+		where   []where.Stm
 		expArgs []interface{}
 		res     string
 	}{
 		{
+			name:  "query update with no set values and Eq filter",
 			table: "test_table",
 			set:   []set{},
-			where: []query.WhereStm{
+			where: []where.Stm{
 				{
 					Field: "field1",
-					Op:    query.Eq,
+					Op:    where.Eq,
 					Value: 0,
 				},
 			},
@@ -35,6 +38,7 @@ func TestQuery_build(t *testing.T) {
 			res:     "UPDATE test_table SET  WHERE field1=?",
 		},
 		{
+			name:  "query update with 2 set values and no filters",
 			table: "test_table",
 			set: []set{
 				{
@@ -46,11 +50,12 @@ func TestQuery_build(t *testing.T) {
 					value: true,
 				},
 			},
-			where:   []query.WhereStm{},
+			where:   []where.Stm{},
 			expArgs: []interface{}{1, true},
 			res:     "UPDATE test_table SET field1=?,field2=?",
 		},
 		{
+			name:  "query update with 2 set values and Eq filter",
 			table: "test_table",
 			set: []set{
 				{
@@ -62,10 +67,10 @@ func TestQuery_build(t *testing.T) {
 					value: true,
 				},
 			},
-			where: []query.WhereStm{
+			where: []where.Stm{
 				{
 					Field: "field1",
-					Op:    query.Eq,
+					Op:    where.Eq,
 					Value: 0,
 				},
 			},
@@ -75,27 +80,25 @@ func TestQuery_build(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		client := mocks.NewClient(t)
-		client.On("Debug").Return(false)
+		t.Run(test.name, func(t *testing.T) {
+			client := mocks.NewClient(t)
+			client.On("Debug").Return(false)
 
-		q := New(client).Table(test.table)
+			q := New(client).Table(test.table)
 
-		for _, s := range test.set {
-			q = q.Set(s.field, s.value)
-		}
+			for _, s := range test.set {
+				q = q.Set(s.field, s.value)
+			}
 
-		for _, w := range test.where {
-			q = q.Where(w.Field, w.Op, w.Value)
-		}
+			for _, w := range test.where {
+				q = q.Where(w.Field, w.Op, w.Value)
+			}
 
-		qs := q.build()
+			qs, err := q.build()
 
-		if qs != test.res {
-			t.Errorf("query err: \nexp: '%s' \ngot: '%s'", test.res, qs)
-		}
-
-		if !reflect.DeepEqual(test.expArgs, q.args) {
-			t.Errorf("query err: \nexp: %v \ngot: %v", test.expArgs, q.args)
-		}
+			assert.NoError(t, err)
+			assert.Equal(t, test.res, qs)
+			assert.Equal(t, test.expArgs, q.args)
+		})
 	}
 }

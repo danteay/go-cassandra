@@ -1,15 +1,15 @@
+// Package gocassandra implements
 package gocassandra
 
 import (
-	"log"
-
 	"github.com/gocql/gocql"
 
+	"github.com/danteay/go-cassandra/config"
+	"github.com/danteay/go-cassandra/logging"
 	"github.com/danteay/go-cassandra/qb/qcount"
 	"github.com/danteay/go-cassandra/qb/qdelete"
 	"github.com/danteay/go-cassandra/qb/qinsert"
 	"github.com/danteay/go-cassandra/qb/qselect"
-	"github.com/danteay/go-cassandra/qb/query"
 	"github.com/danteay/go-cassandra/qb/qupdate"
 )
 
@@ -37,63 +37,37 @@ type Client interface {
 	Debug() bool
 
 	// PrintFn return the configured debug print function.
-	PrintFn() query.DebugPrint
+	PrintFn() logging.DebugPrint
 
 	// Restart should close and start a new connection.
 	Restart() error
 
 	// Config return current client configuration
-	Config() Config
+	Config() config.Config
 
 	// Close ends cassandra connection pool
 	Close()
 }
 
-// DefaultDebugPrint defines a default function that prints resultant query and arguments before being executed
-// and when the Debug flag is true
-func DefaultDebugPrint(q string, args []interface{}, err error) {
-	if q != "" {
-		log.Printf("query: %v \nargs: %v\n", q, args)
-	}
-
-	if err != nil {
-		log.Println("err: ", err.Error())
-	}
-}
-
-// NewClient creates a new cassandra client manager from config
-func NewClient(conf Config) (Client, error) {
+// New creates a new cassandra client manager from config
+func New(conf config.Config) (Client, error) {
 	session, err := getSession(conf)
 	if err != nil {
 		return nil, err
 	}
 
-	c := &client{
+	return &client{
 		session:    session,
 		config:     conf,
 		canRestart: true,
-		printQuery: DefaultDebugPrint,
-	}
-
-	if conf.PrintQuery != nil {
-		c.printQuery = conf.PrintQuery
-	}
-
-	return c, nil
+	}, nil
 }
 
-// NewClientWithSession creates a new cassandra client manager from a given gocql session.
-func NewClientWithSession(session *gocql.Session, conf Config) (Client, error) {
-	c := &client{
+// NewWithSession creates a new cassandra client manager from a given gocql session.
+func NewWithSession(session *gocql.Session, conf config.Config) (Client, error) {
+	return &client{
 		session:    session,
 		config:     conf,
 		canRestart: false,
-		printQuery: DefaultDebugPrint,
-	}
-
-	if conf.PrintQuery != nil {
-		c.printQuery = conf.PrintQuery
-	}
-
-	return c, nil
+	}, nil
 }

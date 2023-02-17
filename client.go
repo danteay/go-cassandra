@@ -3,19 +3,20 @@ package gocassandra
 import (
 	"github.com/gocql/gocql"
 
+	"github.com/danteay/go-cassandra/config"
+	"github.com/danteay/go-cassandra/errors"
+	"github.com/danteay/go-cassandra/logging"
 	"github.com/danteay/go-cassandra/qb/qcount"
 	"github.com/danteay/go-cassandra/qb/qdelete"
 	"github.com/danteay/go-cassandra/qb/qinsert"
 	"github.com/danteay/go-cassandra/qb/qselect"
-	"github.com/danteay/go-cassandra/qb/query"
 	"github.com/danteay/go-cassandra/qb/qupdate"
 )
 
 type client struct {
 	canRestart bool
-	config     Config
+	config     config.Config
 	session    *gocql.Session
-	printQuery query.DebugPrint
 }
 
 var _ Client = &client{}
@@ -41,11 +42,11 @@ func (c *client) Count() *qcount.Query {
 }
 
 func (c *client) Debug() bool {
-	return c.config.Debug
+	return c.Config().Debug
 }
 
-func (c *client) PrintFn() query.DebugPrint {
-	return c.printQuery
+func (c *client) PrintFn() logging.DebugPrint {
+	return c.Config().PrintQuery
 }
 
 func (c *client) Close() {
@@ -56,12 +57,16 @@ func (c *client) Session() *gocql.Session {
 	return c.session
 }
 
-func (c *client) Config() Config {
+func (c *client) Config() config.Config {
 	return c.config
 }
 
 func (c *client) Restart() error {
 	c.Close()
+
+	if !c.canRestart {
+		return errors.ErrUnableToRestart
+	}
 
 	session, err := getSession(c.config)
 	if err != nil {

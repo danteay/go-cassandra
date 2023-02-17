@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
 func TestQuery_Set(t *testing.T) {
@@ -13,7 +13,7 @@ func TestQuery_Set(t *testing.T) {
 	q.Set("col1", 1)
 	q.Set("col2", 2)
 
-	exp1 := query.Columns{"col1", "col2"}
+	exp1 := []string{"col1", "col2"}
 	exp2 := []interface{}{1, 2}
 
 	if !reflect.DeepEqual(q.fields, exp1) {
@@ -28,18 +28,18 @@ func TestQuery_Set(t *testing.T) {
 func TestQuery_Where(t *testing.T) {
 	q := &Query{}
 
-	q.Where("field", query.Eq, 1)
+	q.Where("field", where.Eq, 1)
 	q.Where("field2", ">=", 12)
 
-	exp1 := []query.WhereStm{
+	exp1 := []where.Stm{
 		{
 			Field: "field",
-			Op:    query.Eq,
+			Op:    where.Eq,
 			Value: 1,
 		},
 		{
 			Field: "field2",
-			Op:    query.Ge,
+			Op:    where.GtOrEq,
 			Value: 12,
 		},
 	}

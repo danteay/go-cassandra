@@ -1,8 +1,12 @@
 package gocassandra
 
-import "github.com/gocql/gocql"
+import (
+	"github.com/gocql/gocql"
 
-func getSession(c Config) (*gocql.Session, error) {
+	"github.com/danteay/go-cassandra/config"
+)
+
+func getSession(c config.Config) (*gocql.Session, error) {
 	cluster := gocql.NewCluster(c.ContactPoints...)
 	cluster.Keyspace = c.KeyspaceName
 	cluster.Consistency = gocql.Consistency(c.Consistency)

@@ -1,4 +1,4 @@
-package gocassandra
+package constants
 
 type Consistency uint16
 

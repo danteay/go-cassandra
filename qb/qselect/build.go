@@ -5,10 +5,11 @@ import (
 
 	"github.com/scylladb/gocqlx/qb"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/constants"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
-func (q *Query) build() string {
+func (q *Query) build() (string, error) {
 	sb := qb.Select(q.table)
 
 	if len(q.fields) > 0 {
@@ -16,7 +17,12 @@ func (q *Query) build() string {
 	}
 
 	if len(q.where) > 0 {
-		sb = sb.Where(query.BuildWhere(q.where)...)
+		stms, err := where.BuildStms(q.where)
+		if err != nil {
+			return "", err
+		}
+
+		sb = sb.Where(stms...)
 	}
 
 	if q.limit > 0 {
@@ -32,9 +38,9 @@ func (q *Query) build() string {
 			var order qb.Order = qb.DESC
 
 			switch q.order {
-			case query.Asc:
+			case constants.Asc:
 				order = qb.ASC
-			case query.Desc:
+			case constants.Desc:
 				order = qb.ASC
 			}
 
@@ -46,11 +52,11 @@ func (q *Query) build() string {
 		sb = sb.GroupBy(q.groupBy...)
 	}
 
-	queryStr, _ := sb.Json().ToCql()
+	queryStr, _ := sb.ToCql()
 
 	if q.client.Debug() {
 		q.client.PrintFn()(queryStr, q.args, nil)
 	}
 
-	return strings.TrimSpace(queryStr)
+	return strings.TrimSpace(queryStr), nil
 }

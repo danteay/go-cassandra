@@ -5,25 +5,29 @@ import (
 
 	"github.com/scylladb/gocqlx/qb"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
 // Exec execute delete query and return error on failure
 func (dq *Query) Exec() error {
-	q := dq.build()
-
-	if err := dq.client.Session().Query(q, dq.args...).Exec(); err != nil {
+	q, err := dq.build()
+	if err != nil {
 		return err
 	}
 
-	return nil
+	return dq.runner.QueryNone(q, dq.args)
 }
 
-func (dq *Query) build() string {
+func (dq *Query) build() (string, error) {
 	q := qb.Delete(dq.table)
 
 	if len(dq.where) > 0 {
-		q = q.Where(query.BuildWhere(dq.where)...)
+		stms, err := where.BuildStms(dq.where)
+		if err != nil {
+			return "", err
+		}
+
+		q = q.Where(stms...)
 	}
 
 	queryStr, _ := q.ToCql()
@@ -32,5 +36,5 @@ func (dq *Query) build() string {
 		dq.client.PrintFn()(queryStr, dq.args, nil)
 	}
 
-	return strings.TrimSpace(queryStr)
+	return strings.TrimSpace(queryStr), nil
 }

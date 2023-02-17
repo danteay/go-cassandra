@@ -3,30 +3,31 @@ package qcount
 import (
 	"strings"
 
-	"github.com/gocql/gocql"
 	"github.com/scylladb/gocqlx/qb"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
-// Exec release count query an return the number of rows and a possible error
+// Exec release count query and return the number of rows and a possible error
 func (cq *Query) Exec() (int64, error) {
-	q := cq.build()
-
-	var count int64
-
-	if err := cq.client.Session().Query(q, cq.args...).Consistency(gocql.One).Scan(&count); err != nil {
+	query, err := cq.build()
+	if err != nil {
 		return 0, err
 	}
 
-	return count, nil
+	return cq.runner.Count(query, cq.args)
 }
 
-func (cq *Query) build() string {
+func (cq *Query) build() (string, error) {
 	q := qb.Select(cq.table).Count(cq.column)
 
 	if len(cq.where) > 0 {
-		q = q.Where(query.BuildWhere(cq.where)...)
+		stms, err := where.BuildStms(cq.where)
+		if err != nil {
+			return "", err
+		}
+
+		q = q.Where(stms...)
 	}
 
 	if cq.allowFiltering {
@@ -39,5 +40,5 @@ func (cq *Query) build() string {
 		cq.client.PrintFn()(queryStr, cq.args, nil)
 	}
 
-	return strings.TrimSpace(queryStr)
+	return strings.TrimSpace(queryStr), nil
 }

@@ -9,12 +9,7 @@ import (
 // Exec execute insert query with args
 func (iq *Query) Exec() error {
 	q := iq.build()
-
-	if err := iq.client.Session().Query(q, iq.args...).Exec(); err != nil {
-		return err
-	}
-
-	return nil
+	return iq.runner.QueryNone(q, iq.args)
 }
 
 func (iq *Query) build() string {

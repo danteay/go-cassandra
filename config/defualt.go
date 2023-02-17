@@ -1,4 +1,4 @@
-package gocassandra
+package config
 
 import (
 	"os"
@@ -6,27 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/constants"
+	"github.com/danteay/go-cassandra/logging"
 )
 
-// Config is the main cassandra configuration needed
-type Config struct {
-	Port                     int
-	KeyspaceName             string
-	Username                 string
-	Password                 string
-	ContactPoints            []string
-	Debug                    bool
-	ProtoVersion             int
-	Consistency              Consistency
-	CaPath                   string
-	DisableInitialHostLookup bool
-	Timeout                  time.Duration
-	ConnectTimeout           time.Duration
-	PrintQuery               query.DebugPrint
-	NoHostRetries            int
-}
-
+// DefaultConfig return an instance of Config obtaining his values from environment variables and in case these vars has
+// no values, a default value will be used in place for each field.
 func DefaultConfig() Config {
 	return Config{
 		Port:                     getDefaultPort(),
@@ -36,13 +21,14 @@ func DefaultConfig() Config {
 		ContactPoints:            getContactPoints(),
 		Debug:                    getDebug(),
 		ProtoVersion:             getProtoVersion(),
-		Consistency:              ConsistencyAny,
+		Consistency:              constants.ConsistencyAny,
 		CaPath:                   getCaPath(),
 		DisableInitialHostLookup: getDisableInitialHostLookup(),
 		Timeout:                  getTimeout(),
 		ConnectTimeout:           getConnectionTimeout(),
-		PrintQuery:               DefaultDebugPrint,
+		PrintQuery:               logging.DefaultDebugPrint,
 		NoHostRetries:            getNoHostRetries(),
+		DatetimeLayout:           getDatetimeLayout(),
 	}
 }
 
@@ -192,4 +178,14 @@ func getNoHostRetries() int {
 	}
 
 	return cast
+}
+
+func getDatetimeLayout() string {
+	datetimeLayout := constants.DatetimeLayout
+
+	if osDatetimeLayout := os.Getenv("CASSANDRA_DATETIME_LAYOUT"); osDatetimeLayout != "" {
+		return osDatetimeLayout
+	}
+
+	return datetimeLayout
 }

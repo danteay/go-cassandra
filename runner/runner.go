@@ -1,48 +1,47 @@
 package runner
 
 import (
+	"reflect"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/gocql/gocql"
 
-	"github.com/danteay/go-cassandra"
-	"github.com/danteay/go-cassandra/errors"
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/binder"
+	"github.com/danteay/go-cassandra/config"
+	"github.com/danteay/go-cassandra/logging"
 )
+
+//go:generate mockery --name=Client --filename=client.go --structname=Client --output=mocks --outpkg=mocks
+//go:generate mockery --name=Binder --filename=binder.go --structname=Binder --output=mocks --outpkg=mocks
 
 type Client interface {
 	Session() *gocql.Session
-	Config() gocassandra.Config
+	Config() config.Config
 	Restart() error
 	Debug() bool
-	PrintFn() query.DebugPrint
+	PrintFn() logging.DebugPrint
+}
+
+type Binder interface {
+	MapToStruct(map[string]interface{}, reflect.Type) (reflect.Value, error)
+	IsBindable(interface{}, reflect.Kind) error
 }
 
 type Runner struct {
 	client Client
+	binder Binder
 }
 
-func (r *Runner) Query() {}
+// New creates a new Runner instance from a Client interface
+func New(c Client) *Runner {
+	return &Runner{client: c, binder: binder.New(c)}
+}
 
-func (r *Runner) QueryOne() {}
-
-func (r *Runner) QueryNone(query string, args []interface{}) error {
-	execFn := func() error {
-		if r.client.Session() == nil || r.client.Session().Closed() {
-			return errors.ErrClosedConnection
-		}
-
-		return r.client.Session().Query(query, args...).Exec()
-	}
-
-	opts := []retry.Option{
+func (r *Runner) getRetryOptions() []retry.Option {
+	return []retry.Option{
 		retry.Attempts(uint(r.client.Config().NoHostRetries)),
 		retry.RetryIf(func(err error) bool {
-			switch err {
-			case gocql.ErrNoConnections:
-				return true
-			default:
-				return false
-			}
+			return err == gocql.ErrNoConnections
 		}),
 		retry.OnRetry(func(n uint, err error) {
 			errRestart := r.client.Restart()
@@ -52,10 +51,8 @@ func (r *Runner) QueryNone(query string, args []interface{}) error {
 			}
 		}),
 	}
-
-	return retry.Do(execFn, opts...)
 }
 
-func New(c Client) *Runner {
-	return &Runner{client: c}
+func (r *Runner) getConsistency() gocql.Consistency {
+	return gocql.Consistency(r.client.Config().Consistency)
 }

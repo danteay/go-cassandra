@@ -1,38 +1,50 @@
 package qselect
 
 import (
+	"strings"
+
 	"github.com/gocql/gocql"
 
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/config"
+	"github.com/danteay/go-cassandra/logging"
+	"github.com/danteay/go-cassandra/qb/where"
+	"github.com/danteay/go-cassandra/runner"
 )
 
 //go:generate mockery --name=Client --filename=client.go --structname=Client --output=mocks --outpkg=mocks
 
 type Client interface {
 	Session() *gocql.Session
-	Debug() bool
+	Config() config.Config
 	Restart() error
-	PrintFn() query.DebugPrint
+	Debug() bool
+	PrintFn() logging.DebugPrint
+}
+
+type Runner interface {
+	Query(string, []interface{}, interface{}) error
+	QueryOne(string, []interface{}, interface{}) error
 }
 
 // Query represents a cassandra select statement and his options
 type Query struct {
 	client         Client
-	fields         query.Columns
+	runner         Runner
+	fields         []string
 	args           []interface{}
 	table          string
 	bind           interface{}
-	where          []query.WhereStm
-	groupBy        query.Columns
-	orderBy        query.Columns
-	order          query.Order
+	where          []where.Stm
+	groupBy        []string
+	orderBy        []string
+	order          string
 	limit          uint
 	allowFiltering bool
 }
 
 // New create a new select query by passing a cassandra session and debug options
 func New(c Client) *Query {
-	return &Query{client: c}
+	return &Query{client: c, runner: runner.New(c)}
 }
 
 // Fields save query fields that should be used for select query
@@ -48,16 +60,16 @@ func (q *Query) From(t string) *Query {
 }
 
 // Where adds single where conditional. If more are needed, concatenate more calls to this functions
-func (q *Query) Where(f string, op query.WhereOp, v interface{}) *Query {
-	q.where = append(q.where, query.WhereStm{Field: f, Op: op})
+func (q *Query) Where(f string, op where.Operator, v interface{}) *Query {
+	q.where = append(q.where, where.Stm{Field: f, Op: op})
 	q.args = append(q.args, v)
 	return q
 }
 
 // OrderBy adds `order by` selection statement fields
-func (q *Query) OrderBy(ob []string, o query.Order) *Query {
+func (q *Query) OrderBy(ob []string, o string) *Query {
 	q.orderBy = ob
-	q.order = o
+	q.order = strings.ToUpper(o)
 	return q
 }
 

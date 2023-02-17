@@ -1,34 +1,37 @@
 package qcount
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/danteay/go-cassandra/qb/qcount/mocks"
-	"github.com/danteay/go-cassandra/qb/query"
+	"github.com/danteay/go-cassandra/qb/where"
 )
 
 func TestQuery_build(t *testing.T) {
 	tt := []struct {
+		name           string
 		table          string
 		column         string
-		where          []query.WhereStm
+		where          []where.Stm
 		expQuery       string
 		expArgs        []interface{}
 		allowFiltering bool
 	}{
 		{
+			name:   "select count with Eq and Gt filters",
 			table:  "test",
 			column: "*",
-			where: []query.WhereStm{
+			where: []where.Stm{
 				{
 					Field: "field1",
-					Op:    query.Eq,
+					Op:    where.Eq,
 					Value: true,
 				},
 				{
 					Field: "field2",
-					Op:    query.G,
+					Op:    where.Gt,
 					Value: 123,
 				},
 			},
@@ -36,17 +39,18 @@ func TestQuery_build(t *testing.T) {
 			expQuery: "SELECT count(*) FROM test WHERE field1=? AND field2>?",
 		},
 		{
+			name:   "select count with Eq and GtOrEq filters",
 			table:  "test",
 			column: "id",
-			where: []query.WhereStm{
+			where: []where.Stm{
 				{
 					Field: "field1",
-					Op:    query.Eq,
+					Op:    where.Eq,
 					Value: true,
 				},
 				{
 					Field: "field2",
-					Op:    query.Ge,
+					Op:    where.GtOrEq,
 					Value: 123,
 				},
 			},
@@ -54,18 +58,19 @@ func TestQuery_build(t *testing.T) {
 			expQuery: "SELECT count(id) FROM test WHERE field1=? AND field2>=?",
 		},
 		{
+			name:           "select count with Eq and GtOrEq filters and allow filtering",
 			table:          "test",
 			column:         "id",
 			allowFiltering: true,
-			where: []query.WhereStm{
+			where: []where.Stm{
 				{
 					Field: "field1",
-					Op:    query.Eq,
+					Op:    where.Eq,
 					Value: true,
 				},
 				{
 					Field: "field2",
-					Op:    query.Ge,
+					Op:    where.GtOrEq,
 					Value: 123,
 				},
 			},
@@ -74,28 +79,26 @@ func TestQuery_build(t *testing.T) {
 		},
 	}
 
-	for i, test := range tt {
-		client := mocks.NewClient(t)
-		client.On("Debug").Return(false)
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			client := mocks.NewClient(t)
+			client.On("Debug").Return(false)
 
-		q := New(client).From(test.table).Column(test.column)
+			q := New(client).From(test.table).Column(test.column)
 
-		for _, w := range test.where {
-			q = q.Where(w.Field, w.Op, w.Value)
-		}
+			for _, w := range test.where {
+				q = q.Where(w.Field, w.Op, w.Value)
+			}
 
-		if test.allowFiltering {
-			q = q.AllowFiltering()
-		}
+			if test.allowFiltering {
+				q = q.AllowFiltering()
+			}
 
-		queryStr := q.build()
+			query, err := q.build()
 
-		if test.expQuery != queryStr {
-			t.Errorf("test case: %v\nexp: '%v' \ngot: '%v'", i, test.expQuery, queryStr)
-		}
-
-		if !reflect.DeepEqual(q.args, test.expArgs) {
-			t.Errorf("test case: %v\nexp: %v got: %v", i, test.expArgs, q.args)
-		}
+			assert.NoError(t, err)
+			assert.Equal(t, test.expQuery, query)
+			assert.Equal(t, test.expArgs, q.args)
+		})
 	}
 }
