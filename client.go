@@ -6,11 +6,7 @@ import (
 	"github.com/danteay/go-cassandra/config"
 	"github.com/danteay/go-cassandra/errors"
 	"github.com/danteay/go-cassandra/logging"
-	"github.com/danteay/go-cassandra/qb/qcount"
-	"github.com/danteay/go-cassandra/qb/qdelete"
-	"github.com/danteay/go-cassandra/qb/qinsert"
-	"github.com/danteay/go-cassandra/qb/qselect"
-	"github.com/danteay/go-cassandra/qb/qupdate"
+	"github.com/danteay/go-cassandra/qb"
 )
 
 type client struct {
@@ -21,24 +17,24 @@ type client struct {
 
 var _ Client = &client{}
 
-func (c *client) Select(f ...string) *qselect.Query {
-	return qselect.New(c).Fields(f...)
+func (c *client) Select(f ...string) *qb.Query {
+	return qb.Select(c).Fields(f...)
 }
 
-func (c *client) Insert(f ...string) *qinsert.Query {
-	return qinsert.New(c).Fields(f...)
+func (c *client) Insert(f ...string) *qb.Query {
+	return qb.Insert(c).Fields(f...)
 }
 
-func (c *client) Update(t string) *qupdate.Query {
-	return qupdate.New(c).Table(t)
+func (c *client) Update(t string) *qb.Query {
+	return qb.Update(c).Table(t)
 }
 
-func (c *client) Delete() *qdelete.Query {
-	return qdelete.New(c)
+func (c *client) Delete() *qb.Query {
+	return qb.Delete(c)
 }
 
-func (c *client) Count() *qcount.Query {
-	return qcount.New(c)
+func (c *client) Count() *qb.Query {
+	return qb.Count(c)
 }
 
 func (c *client) Debug() bool {

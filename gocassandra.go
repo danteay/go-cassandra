@@ -6,29 +6,25 @@ import (
 
 	"github.com/danteay/go-cassandra/config"
 	"github.com/danteay/go-cassandra/logging"
-	"github.com/danteay/go-cassandra/qb/qcount"
-	"github.com/danteay/go-cassandra/qb/qdelete"
-	"github.com/danteay/go-cassandra/qb/qinsert"
-	"github.com/danteay/go-cassandra/qb/qselect"
-	"github.com/danteay/go-cassandra/qb/qupdate"
+	"github.com/danteay/go-cassandra/qb"
 )
 
 // Client is the main cassandra client abstraction to work with the database
 type Client interface {
 	// Select start a select query
-	Select(f ...string) *qselect.Query
+	Select(f ...string) *qb.Query
 
 	// Insert start a new insert query statement
-	Insert(f ...string) *qinsert.Query
+	Insert(f ...string) *qb.Query
 
 	// Update start an update query statement
-	Update(t string) *qupdate.Query
+	Update(t string) *qb.Query
 
 	// Delete start a new delete query statement
-	Delete() *qdelete.Query
+	Delete() *qb.Query
 
 	// Count start new count query statement
-	Count() *qcount.Query
+	Count() *qb.Query
 
 	// Session return the plain session object to build some direct query
 	Session() *gocql.Session
@@ -50,24 +46,47 @@ type Client interface {
 }
 
 // New creates a new cassandra client manager from config
-func New(conf config.Config) (Client, error) {
-	session, err := getSession(conf)
-	if err != nil {
+func New(options ...Option) (Client, error) {
+	co := clientOptions{}
+
+	for _, opt := range options {
+		opt(&co)
+	}
+
+	setConfig(&co)
+
+	if err := setSessionFromOpts(&co); err != nil {
 		return nil, err
 	}
 
 	return &client{
-		session:    session,
-		config:     conf,
-		canRestart: true,
+		session:    co.session,
+		config:     *co.config,
+		canRestart: co.canRestart,
 	}, nil
 }
 
-// NewWithSession creates a new cassandra client manager from a given gocql session.
-func NewWithSession(session *gocql.Session, conf config.Config) (Client, error) {
-	return &client{
-		session:    session,
-		config:     conf,
-		canRestart: false,
-	}, nil
+func setConfig(co *clientOptions) {
+	if co.config != nil {
+		return
+	}
+
+	def := config.Default()
+	co.config = &def
+}
+
+func setSessionFromOpts(co *clientOptions) error {
+	if co.session != nil {
+		return nil
+	}
+
+	session, err := getSession(*co.config)
+	if err != nil {
+		return err
+	}
+
+	co.session = session
+	co.canRestart = true
+
+	return nil
 }

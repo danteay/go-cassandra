@@ -44,11 +44,8 @@ func (r *Runner) getRetryOptions() []retry.Option {
 			return err == gocql.ErrNoConnections
 		}),
 		retry.OnRetry(func(n uint, err error) {
-			errRestart := r.client.Restart()
-
-			if r.client.Debug() {
-				r.client.PrintFn()("", nil, errRestart)
-			}
+			_ = r.client.Restart()
+			// TODO: add logging
 		}),
 	}
 }

@@ -25,6 +25,8 @@ func (ws Stm) Build() (qb.Cmp, error) {
 		return qb.Gt(ws.Field), nil
 	case Lt:
 		return qb.Lt(ws.Field), nil
+	case Like:
+		return qb.Like(ws.Field), nil
 	default:
 		return qb.Cmp{}, errors.ErrInvalidWhereOperator
 	}

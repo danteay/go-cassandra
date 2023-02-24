@@ -10,9 +10,9 @@ import (
 	"github.com/danteay/go-cassandra/logging"
 )
 
-// DefaultConfig return an instance of Config obtaining his values from environment variables and in case these vars has
+// Default return an instance of Config obtaining his values from environment variables and in case these vars has
 // no values, a default value will be used in place for each field.
-func DefaultConfig() Config {
+func Default() Config {
 	return Config{
 		Port:                     getDefaultPort(),
 		KeyspaceName:             getKeyspaceName(),

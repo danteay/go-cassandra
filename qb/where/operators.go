@@ -18,4 +18,6 @@ const (
 
 	// Gt grater
 	Gt Operator = ">"
+
+	Like Operator = "like"
 )

@@ -10,4 +10,5 @@ var (
 	ErrClosedConnection        = errors.New("go-cassandra: can execute on closed connection")
 	ErrInvalidWhereOperator    = errors.New("go-cassandra: invalid where operator")
 	ErrUnableToRestart         = errors.New("go-cassandra: unable to restart session")
+	ErrInvalidQueryType        = errors.New("go-cassandra: invalid query type")
 )
